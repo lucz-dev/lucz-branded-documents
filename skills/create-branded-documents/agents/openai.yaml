@@ -1,5 +1,5 @@
 interface:
-  display_name: "Documenti brandizzati"
-  short_description: "Crea PDF, PPTX e DOCX con il brand aziendale"
+  display_name: "Documenti aziendali e legal"
+  short_description: "Crea PDF, PPTX e DOCX aziendali o legal"
   brand_color: "#3B82F6"
-  default_prompt: "Usa $create-branded-documents per creare e salvare una proposta commerciale brandizzata nei formati richiesti."
+  default_prompt: "Usa $create-branded-documents per creare e salvare un documento aziendale o legale nei formati richiesti."
