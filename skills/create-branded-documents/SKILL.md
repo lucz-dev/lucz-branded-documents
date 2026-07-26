@@ -46,6 +46,8 @@ Before calling the renderer, verify all fields that materially affect the offer:
 
 If one or more are missing, call `ask_user` before rendering or mutating the CRM. Group the missing fields into at most three concise questions and make it easy to answer them in one free-form message. Do not create files, contacts, or notes until the answer arrives. Do not silently choose commercial terms.
 
+Never infer a VAT or tax rate. If the user supplies prices as “+ VAT” without a rate, preserve the net subtotal and the wording “VAT excluded” or its language-equivalent; do not calculate or display a tax-inclusive total.
+
 If the request is non-commercial, ask only for missing facts that materially change the document.
 
 ## Draft and render
@@ -60,6 +62,8 @@ Draft concise, recipient-ready content in the requested language:
 - clear next step.
 
 Use `render_branded_documents` exactly once per coherent deliverable. The renderer recalculates line totals and rejects inconsistent supplied totals. Fix the input rather than working around a validation failure.
+
+For every commercial deliverable, pass the structured `pricing` object with each item’s description, quantity, numeric unit price, currency, and tax note. Supply `subtotal` or `total` only as the net sum of the line items. When the tax rate is unknown, use a tax note such as `IVA esclusa` and keep the total net.
 
 For slide presentations, use the organization's dark technology palette where available. For documents, use a light A4 treatment. Keep wording equivalent across paired formats.
 
