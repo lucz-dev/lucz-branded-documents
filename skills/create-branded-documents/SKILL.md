@@ -12,6 +12,7 @@ Create polished files from organization-owned brand and business context. Render
 Interpret the user's words semantically:
 
 - A presentation request without the word "only" means `layout: slides` and formats `pdf,pptx`.
+- This includes wording such as "a PDF in presentation form": because the requested artifact is a presentation and the user did not say "only PDF", generate both PDF and editable PPTX.
 - A document request without the word "only" means `layout: document` and formats `docx,pdf`.
 - "Only PDF", "only PPTX", or "only DOCX" means exactly that one format. Use `slides` for PDF/PPTX presentations and `document` for PDF/DOCX documents.
 - If the user explicitly lists formats, honor that list when it is compatible with one layout. Ask for a choice if they mix PPTX and DOCX in the same deliverable.
@@ -92,7 +93,7 @@ If any save fails, stop without CRM mutations. Report which files were saved and
 
 ## Update the CRM transactionally
 
-Run this section only if the user requested or allowed CRM updates and all files were saved successfully.
+Run this section only after all files were saved successfully. For a commercial proposal or quote addressed to a named recipient, a normal CRM update is allowed by default; skip CRM only when the user explicitly prohibits it or no recipient exists.
 
 1. Search with `list_crm_contacts` using the full recipient name.
 2. Normalize whitespace and compare case-insensitively against each contact's combined `name` and `surname`, and also against `name` alone.
