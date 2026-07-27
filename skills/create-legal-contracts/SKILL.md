@@ -110,6 +110,8 @@ Use `review_status: review-required` unless the user supplies a professionally a
 
 ## Render and save
 
+Read [renderer-payload.md](references/renderer-payload.md) immediately before calling the renderer. Use its exact enum values and object keys; do not rename fields or reduce structured objects to strings.
+
 Every legal deliverable must use:
 
 - `document_kind: legal`;
