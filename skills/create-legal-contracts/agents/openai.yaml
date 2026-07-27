@@ -1,0 +1,4 @@
+interface:
+  display_name: "Contratti e documenti legali"
+  short_description: "Crea contratti DOCX e PDF verificabili"
+  default_prompt: "Usa $create-legal-contracts per creare un contratto completo in DOCX e PDF."
