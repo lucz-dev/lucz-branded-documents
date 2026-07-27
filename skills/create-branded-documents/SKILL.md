@@ -98,6 +98,8 @@ For every commercial deliverable, pass the structured `pricing` object with each
 
 For slide presentations, use the organization's dark technology palette where available. For documents, use a light A4 treatment. Keep wording equivalent across paired formats.
 
+Readable contrast is mandatory in every document, whatever the palette. `text` and `muted_text` must stay clearly legible on `background` and `surface`: dark text on light backgrounds, light text on dark ones. Never carry a slide palette's light text over to a light A4 document: pale grey body text on a white page is a defect, and so is dark text on a dark background. When no documented color gives clear contrast, pass only `primary`, `secondary`, and `accent` and omit `background`, `surface`, `text`, and `muted_text` so the renderer applies its readable defaults. Low-contrast brand colors may still be used for accents, rules, and headings placed on a contrasting surface, never for body text.
+
 Treat the renderer response as successful only when:
 
 - `ok` is true;
