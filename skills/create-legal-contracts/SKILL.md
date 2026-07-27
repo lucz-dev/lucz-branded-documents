@@ -122,6 +122,8 @@ Save both outputs with `save_file`, `destination: files`:
 - filled contract: `Legale/<counterparty-name>/<current-year>`;
 - generic template: `Legale/Modelli/<current-year>`.
 
+The `path` argument is mandatory on every legal `save_file` call. Never omit it and never accept the fallback `agent-outputs` folder.
+
 Sanitize folder segments without changing the displayed legal names inside the document. Preserve the authoritative File Explorer paths returned by `save_file`.
 
 Do not update the CRM for a legal document unless the user explicitly asks. If requested, write only after both files are saved; reuse an exact contact and make the action idempotent with the renderer run ID and both saved paths.
