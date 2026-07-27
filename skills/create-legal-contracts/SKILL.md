@@ -44,6 +44,8 @@ Look for the organization memory `memory_org_preferenza_brand_documenti_legali`.
 
 For a branded output, retrieve exact values from `brand_identity`, `profilo_aziendale`, relevant memories, and the organization File Explorer `Brand` folder. Pass only an exact Vision `{scope,path}` logo reference. For a neutral output, set `brand.apply_identity: false` and omit the logo.
 
+Before declaring onboarding assets missing, open `brand_identity` and `profilo_aziendale` directly in the configured Knowledge space and list the organization `Brand` folder. Do not substitute one generic search for those exact reads.
+
 ## Choose template or filled mode
 
 Determine the mode explicitly:
