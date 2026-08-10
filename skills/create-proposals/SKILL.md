@@ -1,11 +1,15 @@
 ---
 name: create-proposals
-description: Dedicated workflow for a quotes-and-proposals agent. On the first chat it runs a one-time configuration asking for the proposal orientation (vertical A4 document or horizontal 16:9 presentation), the company sector, and the optional sections to include (about us, case studies, project timeline, terms), then stores the answers as an organization memory; on later chats it loads that profile and skips setup. It then composes the proposal and follows create-branded-documents for brand context, rendering, publishing to Preventivi, and CRM updates. Use for preventivi, quotes, offers, and commercial proposals.
+description: Dedicated workflow for a quotes-and-proposals agent. Composes the proposal, prices it from the organization's product catalog, and saves it as a structured quote in Vision that the user can reopen and edit in a graphical editor, then renders the branded PDF from that saved quote. On the first chat it runs a one-time configuration asking for the proposal orientation (vertical A4 document or horizontal 16:9 presentation), the company sector, and the optional sections to include, then stores the answers as an organization memory. Use for preventivi, quotes, offers, and commercial proposals.
 ---
 
 # Create Proposals
 
-Create recipient-ready commercial proposals shaped by a persistent per-organization proposal profile. This skill governs the proposal-specific decisions: the one-time configuration, the orientation-to-layout mapping, and the section structure. Everything else — brand context, missing commercial details, rendering, publishing, and CRM — follows `create-branded-documents` unchanged.
+Create recipient-ready commercial proposals shaped by a persistent per-organization proposal profile.
+
+**A quote is a saved, editable document, not a one-shot file.** `upsert_quote` stores it in Vision; the user opens it at the returned URL, edits it in a graphical editor, and regenerates the PDF with the same renderer you used. Always finish by giving them that link.
+
+This skill governs the proposal-specific decisions: the one-time configuration, the orientation-to-layout mapping, the section structure, and the quote lifecycle. Brand context and the commercial-detail rules follow `create-branded-documents`.
 
 ## Load the proposal profile
 
@@ -38,22 +42,34 @@ Only when the user chose to save the configuration, call `remember` with:
 
 Do not call `remember` when the user chose "only this conversation". Reusing the same title updates the stored profile instead of creating duplicates: when the user asks to reconfigure or change a stored choice, re-run the relevant setup questions and save with the same title.
 
-## Map orientation to renderer output
+## Price from the catalog
 
-The stored orientation fully determines the renderer layout and the compatible formats:
+Before inventing any figure, search the organization's catalog:
 
-| Profile orientation | `layout` | Page geometry | Default formats | "Only PDF" request |
-| --- | --- | --- | --- | --- |
-| Vertical | `document` | A4 portrait | `docx,pdf` | `pdf` only |
-| Horizontal | `slides` | 16:9 landscape | `pdf,pptx` | `pdf` only |
+1. `list_products` with a `query` for each service or product the proposal covers. Add `detail: true` to get variants and options in one call.
+2. Use the real catalogued price. A variant carries its own price; an attribute value adds its `price_modifier`.
+3. Pass the catalogue `product_id` on the corresponding pricing line, so the quote stays linked to what the organization actually sells.
+4. When the user dictates a price for something not in the catalog, offer to save it with `upsert_product` so it is reusable. Ask first, never save silently.
+5. The catalog has no currency, VAT or discount field: a price is exactly the number stored.
 
-- An explicit format request in a single conversation overrides the profile for that request only; the stored profile stays unchanged.
-- Never mix DOCX with `slides` or PPTX with `document`; the renderer rejects incompatible pairs. A horizontal DOCX or a vertical PPTX does not exist.
-- Always use `document_kind: commercial` for proposals. If the request is a contract or any other legal document, the legal rules of `create-branded-documents` prevail over this profile, including its forced document layout and formats.
+## Map orientation to the quote layout
+
+The stored orientation determines the quote `layout` and therefore the renderable formats:
+
+| Profile orientation | `layout` | Page geometry | Formats |
+| --- | --- | --- | --- |
+| Vertical | `document` | A4 portrait | `pdf`, `docx` |
+| Horizontal | `slides` | 16:9 landscape | `pdf`, `pptx` |
+
+- An explicit format request overrides the profile for that request only; the stored profile stays unchanged.
+- Never mix DOCX with `slides` or PPTX with `document`: the renderer rejects incompatible pairs.
+- The quote is always `document_kind: commercial`. If the request is a contract or any other legal document, it is not yours: hand it to the legal agent, which uses `create-legal-contracts`.
 
 ## Compose the proposal
 
-Always include the core sections: cover with recipient, executive summary, scope and deliverables, structured pricing, and a closing next step passed as the renderer `call_to_action`.
+Call `get_estimate_workflow` for the exact document shape, and `get_estimate_defaults` for the organization brand, currency and standard terms. Never invent brand colors, company name or contact lines.
+
+Always include the core sections: recipient on the cover, executive summary, scope and deliverables, structured pricing, and a closing next step in `call_to_action`.
 
 Add the optional sections enabled by the profile:
 
@@ -62,15 +78,26 @@ Add the optional sections enabled by the profile:
 - Project timeline — phases with realistic durations tied to the offered scope.
 - Terms and conditions — rendered through the `terms` array with short label and value pairs, not as a prose section.
 
-Let the stored sector shape tone, vocabulary, and section emphasis; see `references/proposal-structures.md` for per-sector guidance. Resolve missing commercial details, pricing structure, and VAT wording exactly as prescribed by `create-branded-documents`; never infer a tax rate.
+Let the stored sector shape tone, vocabulary, and section emphasis; see `references/proposal-structures.md` for per-sector guidance.
 
-## Render, publish, CRM
+Ask for missing material commercial details with `ask_user` before saving anything, exactly as prescribed by `create-branded-documents`. Never infer a VAT rate: with "+ IVA" and no rate, use net amounts and `tax_note: "IVA esclusa"`.
 
-Follow `create-branded-documents` without deviation for everything downstream:
+## Save, link, render
 
-- gather brand identity and organization context before drafting;
-- ask for missing material commercial details before rendering or touching the CRM;
-- call `render_branded_documents` exactly once per coherent deliverable and accept only a complete, successful response;
-- save every returned file with `save_file` to `Preventivi/<recipient>/<current-year>`;
-- update the CRM transactionally after all saves succeed, including the `Riferimento run` line and every authoritative saved path;
-- run the same final verification before responding.
+1. `upsert_quote` with `name`, the composed `document`, and `client_id` when the recipient is a known CRM contact. It returns `quote_id` and `url`.
+2. **Close your reply with that `url`** as a markdown link, so the user can open the quote and edit it. This is the point of the whole workflow: do not omit it.
+3. `render_quote` with the `quote_id` to produce the branded PDF. It files the output under `Preventivi/<recipient>/<current-year>` in the File Explorer and records it on the quote. Add `docx` (or `pptx` for slides) only when asked.
+
+Never send `subtotal` or `total`: the renderer recalculates them and rejects a conflicting figure.
+
+Do not use `render_branded_documents` or `save_file` for quotes. Those remain for reports, decks and other one-off branded documents; a quote goes through `upsert_quote` so it stays editable.
+
+## Changing an existing quote
+
+When the user asks for a change to a quote that already exists:
+
+1. `list_quotes` with the `quote_id` to read the current document, or with a `query` to find it.
+2. `upsert_quote` with `quote_id` and `patch` containing only the fields that change. Do not resend the whole document for a one-line edit: `patch` cannot drop the parts you did not mention.
+3. `render_quote` again to refresh the PDF.
+
+Offer the quick follow-ups the user is most likely to want, as a trailing fenced `quick-replies` block, for example: open the quote to edit it, generate the DOCX too, change a line price.

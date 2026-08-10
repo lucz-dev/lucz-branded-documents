@@ -1,5 +1,5 @@
 interface:
   display_name: "Preventivi e proposte"
-  short_description: "Crea preventivi PDF verticali o presentazioni 16:9"
+  short_description: "Preventivi modificabili in Vision, con PDF brandizzato"
   brand_color: "#10B981"
   default_prompt: "Usa $create-proposals per creare un preventivo con la configurazione salvata."
