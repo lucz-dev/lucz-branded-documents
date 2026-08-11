@@ -70,6 +70,8 @@ The stored orientation determines the quote `layout` and therefore the renderabl
 
 Call `get_estimate_workflow` for the exact document shape, and `get_estimate_defaults` for the organization brand, currency and standard terms. Never invent brand colors, company name or contact lines.
 
+Copy the returned `brand` block into the document unchanged, and keep `apply_identity: true` unless the user explicitly asks for a neutral document. With the identity off the renderer removes the logo, the coloured band across the top and the company name in the footer, and the proposal comes out as an anonymous page. Leave `brand.logo` out of what you compose: the organization logo lives in the File Explorer and the server attaches it for you, so a path you invent would only fail the render.
+
 Always include the core sections: recipient on the cover, executive summary, scope and deliverables, structured pricing, and a closing next step in `call_to_action`.
 
 Add the optional sections enabled by the profile:
