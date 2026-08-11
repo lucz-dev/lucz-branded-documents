@@ -47,10 +47,11 @@ Do not call `remember` when the user chose "only this conversation". Reusing the
 Before inventing any figure, search the organization's catalog:
 
 1. `list_products` with a `query` for each service or product the proposal covers. Add `detail: true` to get variants and options in one call.
-2. Use the real catalogued price. A variant carries its own price; an attribute value adds its `price_modifier`.
-3. Pass the catalogue `product_id` on the corresponding pricing line, so the quote stays linked to what the organization actually sells.
-4. When the user dictates a price for something not in the catalog, offer to save it with `upsert_product` so it is reusable. Ask first, never save silently.
-5. The catalog has no currency, VAT or discount field: a price is exactly the number stored.
+2. **If a query returns nothing, call `list_products` with no query before concluding the service is not priced.** Catalogs are small and their entries are named generically: an hourly "Sviluppo IT" line is the right price for a custom web app, and no keyword search for "gestionale" will ever surface it. Read the whole catalog first.
+3. Use the real catalogued price. A variant carries its own price; an attribute value adds its `price_modifier`.
+4. Pass the catalogue `product_id` on the corresponding pricing line, so the quote stays linked to what the organization actually sells.
+5. When the user dictates a price for something not in the catalog, offer to save it with `upsert_product` so it is reusable. Ask first, never save silently.
+6. The catalog has no currency, VAT or discount field: a price is exactly the number stored.
 
 ## Map orientation to the quote layout
 
@@ -84,8 +85,8 @@ Ask for missing material commercial details with `ask_user` before saving anythi
 
 ## Save, link, render
 
-1. `upsert_quote` with `name`, the composed `document`, and `client_id` when the recipient is a known CRM contact. It returns `quote_id` and `url`.
-2. **Close your reply with that `url`** as a markdown link, so the user can open the quote and edit it. This is the point of the whole workflow: do not omit it.
+1. `upsert_quote` with `name`, the composed `document`, and `client_id` when the recipient is a known CRM contact. It returns `quote_id`, `chat_url` and `url`.
+2. **Close your reply with `chat_url`** as a markdown link. In chat that link renders as a preview card showing the recipient, the total and an Edit button, instead of navigating the user away. This is the point of the whole workflow: do not omit it. (`url` is the raw editor link, for when you need to name the destination explicitly.)
 3. `render_quote` with the `quote_id` to produce the branded PDF. It files the output under `Preventivi/<recipient>/<current-year>` in the File Explorer and records it on the quote. Add `docx` (or `pptx` for slides) only when asked.
 
 Never send `subtotal` or `total`: the renderer recalculates them and rejects a conflicting figure.
@@ -97,7 +98,7 @@ Do not use `render_branded_documents` or `save_file` for quotes. Those remain fo
 When the user asks for a change to a quote that already exists:
 
 1. `list_quotes` with the `quote_id` to read the current document, or with a `query` to find it.
-2. `upsert_quote` with `quote_id` and `patch` containing only the fields that change. Do not resend the whole document for a one-line edit: `patch` cannot drop the parts you did not mention.
+2. `upsert_quote` with `quote_id` and `patch` containing only the fields that change. Do not resend the whole document for a one-line edit: `patch` cannot drop the parts you did not mention. `patch` replaces **whole top-level fields**, so to add or reprice a line send the entire `pricing` object with all its items: `{ pricing: { currency, items: [...] } }`, never a bare `{ items: [...] }`, which is rejected.
 3. `render_quote` again to refresh the PDF.
 
 Offer the quick follow-ups the user is most likely to want, as a trailing fenced `quick-replies` block, for example: open the quote to edit it, generate the DOCX too, change a line price.
