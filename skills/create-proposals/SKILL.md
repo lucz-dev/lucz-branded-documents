@@ -85,9 +85,10 @@ Ask for missing material commercial details with `ask_user` before saving anythi
 
 ## Save, link, render
 
-1. `upsert_quote` with `name`, the composed `document`, and `client_id` when the recipient is a known CRM contact. It returns `quote_id`, `chat_url` and `url`.
-2. **Close your reply with `chat_url`** as a markdown link. In chat that link renders as a preview card showing the recipient, the total and an Edit button, instead of navigating the user away. This is the point of the whole workflow: do not omit it. (`url` is the raw editor link, for when you need to name the destination explicitly.)
-3. `render_quote` with the `quote_id` to produce the branded PDF. It files the output under `Preventivi/<recipient>/<current-year>` in the File Explorer and records it on the quote. Add `docx` (or `pptx` for slides) only when asked.
+1. **Resolve the CRM contact first**, before saving: `list_crm_contacts` to find it and, for a named recipient that is missing, `upsert_crm_contact` to create it. You need its id in the next step. A quote saved without `client_id` stays detached from the customer and nobody goes back to attach it.
+2. `upsert_quote` with `name`, the composed `document`, and `client_id` (the id from the previous step). It returns `quote_id`, `chat_url` and `url`.
+3. **Close your reply with `chat_url`** as a markdown link. In chat that link renders as a preview card showing the recipient, the total and an Edit button, instead of navigating the user away. This is the point of the whole workflow: do not omit it. (`url` is the raw editor link, for when you need to name the destination explicitly.)
+4. `render_quote` with the `quote_id` to produce the branded PDF. It files the output under `Preventivi/<recipient>/<current-year>` in the File Explorer and records it on the quote. Add `docx` (or `pptx` for slides) only when asked.
 
 Never send `subtotal` or `total`: the renderer recalculates them and rejects a conflicting figure.
 
