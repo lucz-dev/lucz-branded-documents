@@ -39,6 +39,8 @@ Use the native tool schema as authoritative. This reference highlights the legal
 
 Include the documented colors, fonts, company details and exact `{scope,path}` logo reference when `apply_identity` is true. Never pass JavaScript `undefined`; omit optional keys instead.
 
+There is no `v` key in a legal payload, and no `blocks`. The typed content blocks the tool schema also documents (`v: 2`) are for commercial and general documents; the renderer rejects `document_kind: legal` on a block body, because the contract sheet, the parties table, the placeholder register and the signature blocks are built from `legal` paired with `sections`.
+
 ## Legal object
 
 Use exact enum values:

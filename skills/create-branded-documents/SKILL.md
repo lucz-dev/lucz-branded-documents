@@ -76,6 +76,7 @@ Verify all material legal facts before rendering: document type and purpose, ful
 
 For every legal render:
 
+- keep the flat `sections` shape and omit `v: 2` and `blocks`. The renderer builds the contract sheet, the parties table, the placeholder register, and the signature blocks from `legal` metadata paired with sections, and it rejects `document_kind: legal` on a block document;
 - set `document_kind: legal`, `layout: document`, and `formats: [docx,pdf]`;
 - set `brand.apply_identity: true` only for a confirmed branded preference, then include the exact logo reference and onboarding colors and fonts;
 - set `brand.apply_identity: false` for a neutral preference and omit `brand.logo`; organization colors and fonts are ignored in this mode;
@@ -83,18 +84,27 @@ For every legal render:
 
 ## Draft and render
 
-Draft concise, recipient-ready content in the requested language:
+Compose the body as **typed content blocks**: send `v: 2` and a `blocks` array. A block says what to write; the renderer decides how to print it in PDF, DOCX and PPTX, which is what keeps paired formats equivalent. Read [blocks.md](references/blocks.md) before composing the first document of a conversation: it holds the catalog, the constraints the renderer enforces, and a worked block sequence. Leave `id` out of every block; the server assigns them.
 
-- cover/title with recipient;
-- purpose or executive summary;
-- scope and deliverables;
-- pricing table when commercial;
-- timing, payment, validity, exclusions, and assumptions;
-- clear next step.
+Draft concise, recipient-ready content in the requested language, usually in this order:
+
+- a level-1 `heading` with the recipient, then a `text` with the purpose or executive summary;
+- `bullets` or `table` for scope and deliverables;
+- a `pricing` block when the deliverable is commercial;
+- a `terms` block for timing, payment, validity, exclusions, and assumptions;
+- a `callout` with the clear next step.
+
+Legal documents are the exception and keep the flat `sections` shape: see the legal rules above.
 
 Use `render_branded_documents` exactly once per coherent deliverable. The renderer recalculates line totals and rejects inconsistent supplied totals. Fix the input rather than working around a validation failure.
 
-For every commercial deliverable, pass the structured `pricing` object with each item’s description, quantity, numeric unit price, currency, and tax note. Supply `subtotal` or `total` only as the net sum of the line items. When the tax rate is unknown, use a tax note such as `IVA esclusa` and keep the total net.
+For every commercial deliverable, send exactly one `pricing` block, with each line's description, quantity, and numeric unit price plus the currency and tax note. Never send `subtotal` or `total`: the renderer sums the lines itself and rejects a figure that disagrees. When the tax rate is unknown, use a tax note such as `IVA esclusa` and keep the amounts net.
+
+### Images and charts
+
+Numbers get a `chart` block, never a screenshot or a hand-drawn table of figures: the chart is drawn in the brand colors, stays legible at any size, and remains editable afterwards. One value per label, up to three series. Two to four figures that carry the argument go in a `kpi` block instead of being buried in prose.
+
+An `image` block takes a File Explorer reference, `{scope, path}`, never a URL and never base64. Use images that already exist in the organization files, at most eight distinct ones per document, PNG, JPEG, or WebP. Do not use an image to show text: it is invisible to search and to whoever regenerates the document. An asset that cannot be resolved comes back as a warning rather than a failure, so read the warnings before declaring the render clean.
 
 For slide presentations, use the organization's dark technology palette where available. For documents, use a light A4 treatment. Keep wording equivalent across paired formats.
 

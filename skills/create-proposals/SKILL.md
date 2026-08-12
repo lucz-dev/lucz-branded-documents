@@ -9,7 +9,7 @@ Create recipient-ready commercial proposals shaped by a persistent per-organizat
 
 **A quote is a saved, editable document, not a one-shot file.** `upsert_quote` stores it in Vision; the user opens it at the returned URL, edits it in a graphical editor, and regenerates the PDF with the same renderer you used. Always finish by giving them that link.
 
-This skill governs the proposal-specific decisions: the one-time configuration, the orientation-to-layout mapping, the section structure, and the quote lifecycle. Brand context and the commercial-detail rules follow `create-branded-documents`.
+This skill governs the proposal-specific decisions: the one-time configuration, the orientation-to-layout mapping, the block structure of a proposal, and the quote lifecycle. Brand context and the commercial-detail rules follow `create-branded-documents`.
 
 ## Load the proposal profile
 
@@ -25,12 +25,12 @@ Run the setup only when the profile memory is absent and the run is an interacti
 
 Call the native `ask_user` tool once, with one form of exactly four questions in the user's language:
 
-1. Orientation — single select, two options: a vertical proposal (PDF document, A4 portrait) or a horizontal proposal (16:9 presentation).
-2. Company sector — single select with up to four representative options (for example: services and consulting; agency and marketing; software and technology; commerce and products). Free-form answers are always possible, so no catch-all option is needed.
-3. Optional sections — multi select, exactly these four options: About us, Case studies, Project timeline, Terms and conditions. Explain that the core sections (cover with recipient, executive summary, scope and deliverables, pricing, closing call to action) are always included.
-4. Persistence — single select, two options: save this configuration for future proposals, or use it only for this conversation.
+1. Orientation: single select, two options: a vertical proposal (PDF document, A4 portrait) or a horizontal proposal (16:9 presentation).
+2. Company sector: single select with up to four representative options (for example: services and consulting; agency and marketing; software and technology; commerce and products). Free-form answers are always possible, so no catch-all option is needed.
+3. Optional sections: multi select, exactly these four options: About us, Case studies, Project timeline, Terms and conditions. Explain that the core sections (cover with recipient, executive summary, scope and deliverables, pricing, closing call to action) are always included.
+4. Persistence: single select, two options: save this configuration for future proposals, or use it only for this conversation.
 
-Do not ask these questions in plain prose. If `ask_user` is unavailable, declined, or unanswered, continue the current request with defaults — vertical orientation and the core sections only — and save nothing. In unattended or routine runs, never attempt the setup; use the same defaults.
+Do not ask these questions in plain prose. If `ask_user` is unavailable, declined, or unanswered, continue the current request with defaults (vertical orientation and the core sections only) and save nothing. In unattended or routine runs, never attempt the setup; use the same defaults.
 
 ## Persist the profile
 
@@ -68,20 +68,29 @@ The stored orientation determines the quote `layout` and therefore the renderabl
 
 ## Compose the proposal
 
-Call `get_estimate_workflow` for the exact document shape, and `get_estimate_defaults` for the organization brand, currency and standard terms. Never invent brand colors, company name or contact lines.
+Call `get_estimate_workflow` for the exact document shape, and `get_estimate_defaults` for the organization brand, currency and standard terms. **The workflow tool is the authoritative catalog** of block kinds, their fields and their limits: read it and compose from it, never from memory, and never invent a kind that is not listed. Never invent brand colors, company name or contact lines.
 
-Copy the returned `brand` block into the document unchanged, and keep `apply_identity: true` unless the user explicitly asks for a neutral document. With the identity off the renderer removes the logo, the coloured band across the top and the company name in the footer, and the proposal comes out as an anonymous page. Leave `brand.logo` out of what you compose: the organization logo lives in the File Explorer and the server attaches it for you, so a path you invent would only fail the render.
+Copy the returned `brand` object into the document unchanged, and keep `apply_identity: true` unless the user explicitly asks for a neutral document. With the identity off the renderer removes the logo, the coloured band across the top and the company name in the footer, and the proposal comes out as an anonymous page. Leave `brand.logo` out of what you compose: the organization logo lives in the File Explorer and the server attaches it for you, so a path you invent would only fail the render.
 
-Always include the core sections: recipient on the cover, executive summary, scope and deliverables, structured pricing, and a closing next step in `call_to_action`.
+The body is a sequence of typed content blocks (`v: 2`, `blocks`), not a set of fixed sections: you decide what to say and in what order, the renderer decides how to print it. Leave `id` out of every block, the server assigns them.
+
+Always include the core content:
+
+- a level-1 `heading` with the recipient, then a `text` with the executive summary;
+- `bullets` or `table` for scope and deliverables;
+- one `pricing` block carrying the catalogued lines;
+- a closing `callout` with the next step.
 
 Add the optional sections enabled by the profile:
 
-- About us — a concise company presentation from Knowledge and onboarding facts.
-- Case studies — one section built only from real, documented engagements found in Knowledge or CRM notes; never invent clients, metrics, or outcomes. When no documented case study fits, ask the user or omit the section, stating why.
-- Project timeline — phases with realistic durations tied to the offered scope.
-- Terms and conditions — rendered through the `terms` array with short label and value pairs, not as a prose section.
+- About us - a `heading` plus `text` presenting the company from Knowledge and onboarding facts.
+- Case studies - built only from real, documented engagements found in Knowledge or CRM notes; never invent clients, metrics, or outcomes. When no documented case study fits, ask the user or omit it, stating why.
+- Project timeline - a `table` of phases and realistic durations tied to the offered scope.
+- Terms and conditions - a `terms` block of short label and value pairs, never a prose section.
 
-Let the stored sector shape tone, vocabulary, and section emphasis; see `references/proposal-structures.md` for per-sector guidance.
+Use `kpi` for the two to four figures that carry the argument, `chart` when a number has a shape worth seeing (trend, split, comparison), `image` for an asset already in the File Explorer, and `columns` when two things are genuinely read side by side. Split the prose where the meaning splits: on slides the renderer packs blocks until the slide is full, so one enormous `text` block wastes the layout.
+
+Let the stored sector shape tone, vocabulary, and emphasis; see `references/proposal-structures.md` for per-sector guidance.
 
 Ask for missing material commercial details with `ask_user` before saving anything, exactly as prescribed by `create-branded-documents`. Never infer a VAT rate: with "+ IVA" and no rate, use net amounts and `tax_note: "IVA esclusa"`.
 
@@ -100,8 +109,12 @@ Do not use `render_branded_documents` or `save_file` for quotes. Those remain fo
 
 When the user asks for a change to a quote that already exists:
 
-1. `list_quotes` with the `quote_id` to read the current document, or with a `query` to find it.
-2. `upsert_quote` with `quote_id` and `patch` containing only the fields that change. Do not resend the whole document for a one-line edit: `patch` cannot drop the parts you did not mention. `patch` replaces **whole top-level fields**, so to add or reprice a line send the entire `pricing` object with all its items: `{ pricing: { currency, items: [...] } }`, never a bare `{ items: [...] }`, which is rejected.
-3. `render_quote` again to refresh the PDF.
+1. `list_quotes` with the `quote_id` to read the current document and the ids of its blocks, or with a `query` to find it.
+2. Write back with `upsert_quote` and the **smallest form that fits**. Never resend the whole document for a one-line edit; the three partial forms are mutually exclusive, so use one per call:
+   - `block_patch: { id, block }` replaces one block, keeping its id, and reaches blocks nested inside `columns`. This is the normal way to fix a sentence or a price: on a real quote it costs roughly a tenth of resending `blocks`.
+   - `block_ops: [ ... ]` changes the sequence: `{op: "insert", block, at?}`, `{op: "remove", id}`, `{op: "move", id, to}`. They apply in order, so `at` and `to` refer to the sequence as the previous operations left it.
+   - `patch: { ... }` replaces whole top-level fields (`title`, `layout`, `brand`, `blocks`). Unknown keys are rejected rather than ignored: `{ items: [...] }` fails, `{ blocks: [...] }` works.
+3. An operation on an id that does not exist fails instead of silently doing nothing, and the error lists the real ids. Do not retry with a guessed id: read the document again with `list_quotes`.
+4. `render_quote` again to refresh the PDF.
 
 Offer the quick follow-ups the user is most likely to want, as a trailing fenced `quick-replies` block, for example: open the quote to edit it, generate the DOCX too, change a line price.

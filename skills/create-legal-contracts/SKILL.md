@@ -94,6 +94,8 @@ Never infer that non-compete, employment, consumer, privacy, liability or forum 
 
 ## Draft the contract
 
+A contract is written as `sections`, and only as `sections`. Commercial and general documents now carry a `blocks` body (`v: 2`), but the renderer rejects `document_kind: legal` on a block document: the contract sheet, the parties table, the placeholder register and the signature blocks are built from `legal` metadata paired with the flat section list, and none of that exists in the block catalog. Do not send `v` or `blocks` here, whatever another skill shows.
+
 Use numbered, cross-referenced sections. Include, as applicable:
 
 - title, date/effective-date treatment and party definitions;
