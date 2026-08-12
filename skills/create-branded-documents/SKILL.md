@@ -76,7 +76,7 @@ Verify all material legal facts before rendering: document type and purpose, ful
 
 For every legal render:
 
-- keep the flat `sections` shape and omit `v: 2` and `blocks`. The renderer builds the contract sheet, the parties table, the placeholder register, and the signature blocks from `legal` metadata paired with sections, and it rejects `document_kind: legal` on a block document;
+- write the body as blocks like any other document, and send the `legal` object beside it. The renderer builds the contract sheet, the parties table, the register of fields to fill, the annexes and the signature blocks from `legal`: never re-type those as blocks, or they appear twice;
 - set `document_kind: legal`, `layout: document`, and `formats: [docx,pdf]`;
 - set `brand.apply_identity: true` only for a confirmed branded preference, then include the exact logo reference and onboarding colors and fonts;
 - set `brand.apply_identity: false` for a neutral preference and omit `brand.logo`; organization colors and fonts are ignored in this mode;

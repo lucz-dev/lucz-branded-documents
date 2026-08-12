@@ -26,12 +26,10 @@ Use the native tool schema as authoritative. This reference highlights the legal
     "company_details": [],
     "contact_lines": []
   },
-  "sections": [
-    {
-      "title": "1. Parties",
-      "body": "Section text",
-      "bullets": []
-    }
+  "v": 2,
+  "blocks": [
+    { "kind": "heading", "text": "1. Parties", "level": 2 },
+    { "kind": "text", "body": "Clause text" }
   ],
   "legal": {}
 }
@@ -39,7 +37,9 @@ Use the native tool schema as authoritative. This reference highlights the legal
 
 Include the documented colors, fonts, company details and exact `{scope,path}` logo reference when `apply_identity` is true. Never pass JavaScript `undefined`; omit optional keys instead.
 
-There is no `v` key in a legal payload, and no `blocks`. The typed content blocks the tool schema also documents (`v: 2`) are for commercial and general documents; the renderer rejects `document_kind: legal` on a block body, because the contract sheet, the parties table, the placeholder register and the signature blocks are built from `legal` paired with `sections`.
+The body is the same block catalog every other document uses; `legal` travels beside it and is what the renderer turns into the contract sheet, the parties table, the register of fields to fill, the annexes and the signature blocks. Never write those as blocks: they would be printed twice.
+
+The older flat `sections` body still renders, so a contract you generated before the change stays reproducible. New contracts use blocks.
 
 ## Legal object
 

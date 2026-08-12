@@ -43,9 +43,11 @@ Price lines are `{ description, quantity, unit_price, unit?, product_id? }`.
 - **A `chart` carries numbers, not a picture.** One value per label. It is drawn
   in the brand colors and stays editable, which a screenshot never does.
 - `layout: "document"` renders PDF/DOCX, `layout: "slides"` renders PDF/PPTX.
-- Legal documents do **not** use blocks: `document_kind: legal` keeps the
-  `sections` shape plus its `legal` metadata, which the renderer needs to build
-  the contract sheet, the parties table and the signature blocks.
+- **Legal documents use blocks for the body and keep their `legal` metadata**
+  beside it. The contract sheet, the parties table, the register of fields to
+  fill, the annexes and the signature blocks are built from `legal`: writing
+  them as blocks prints them twice. In a contract, stay on `heading`, `text`,
+  `table` and `bullets`.
 
 ## Composing
 

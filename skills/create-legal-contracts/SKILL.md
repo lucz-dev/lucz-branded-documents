@@ -94,7 +94,13 @@ Never infer that non-compete, employment, consumer, privacy, liability or forum 
 
 ## Draft the contract
 
-A contract is written as `sections`, and only as `sections`. Commercial and general documents now carry a `blocks` body (`v: 2`), but the renderer rejects `document_kind: legal` on a block document: the contract sheet, the parties table, the placeholder register and the signature blocks are built from `legal` metadata paired with the flat section list, and none of that exists in the block catalog. Do not send `v` or `blocks` here, whatever another skill shows.
+Write the contract body as typed content blocks: `v: 2` plus `blocks`, the same catalog every other document uses. The `legal` object travels beside it, unchanged.
+
+Keep the two apart. The **body** is what you write: numbered clauses, definitions, schedules. The **contract furniture** is what the renderer builds from `legal` metadata: the contract sheet, the parties table, the register of fields to fill, the annex table and the signature blocks. Do not re-type any of that as blocks; it would appear twice.
+
+For a contract, most of the body is `heading` plus `text`. Reach for `table` when the content is genuinely tabular (fee schedules, milestones, data-processing categories) and for `bullets` when a clause enumerates. Do not use `kpi`, `chart` or `columns` in a contract: a clause read in two columns is a clause read twice.
+
+Placeholders are scanned in every block that carries words, table cells and captions included, so a `{{FIELD}}` written inside a table is a declared field like any other: template mode still requires each one declared exactly once and used at least once, and filled mode still rejects any that survive.
 
 Use numbered, cross-referenced sections. Include, as applicable:
 
